@@ -59,7 +59,7 @@ unsafe fn set_up_vao(coordinates: &Vec<f32>, indices: &Vec<u32>) -> u32 {
         gl::STATIC_DRAW,
     );
 
-    gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
+    gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 12, ptr::null());
     gl::EnableVertexAttribArray(0);
 
     let mut index_bufferIds: u32 = 0;
@@ -135,10 +135,26 @@ fn main() {
 
         // == // Set up your VAO here
         let vao_id: u32;
-        let coordinates: Vec<f32> = vec![-0.6, -0.6, 0.0, 0.6, -0.6, 0.0, 0.0, 0.6, 0.0];
-        let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+        // Have separate objects for each triangle to make it easier to read and modify
+        let triangle1: Vec<f32> = vec![-0.2, -0.2, 0.0, 0.2, -0.1, 0.0, 0.0, 0.5, 0.0];
+        let triangle2: Vec<f32> = vec![-0.9, -0.6, 0.0, -0.5, -0.6, 0.0, -0.7, 0.2, 0.0];
+        let triangle3: Vec<f32> = vec![-0.8, 0.6, 0.0, -0.7, 0.4, 0.0, -0.6, 0.6, 0.0];
+        let triangle4: Vec<f32> = vec![0.7, -0.5, 0.0, 0.9, -0.3, 0.0, 0.7, -0.1, 0.0];
+        let triangle5: Vec<f32> = vec![0.25, 0.25, 0.0, 0.95, 0.7, 0.0, 0.3, 0.8, 0.0];
+        let triangle6: Vec<f32> = vec![0.0, -0.6, 0.0, 0.5, -0.7, 0.0, 0.3, -0.5, 0.0];
+        let mut coordinates_task1: Vec<f32> = Vec::new();
+        coordinates_task1.extend(&triangle1);
+        coordinates_task1.extend(&triangle2);
+        coordinates_task1.extend(&triangle3);
+        coordinates_task1.extend(&triangle4);
+        coordinates_task1.extend(&triangle5);
+        coordinates_task1.extend(&triangle6);
+
+        let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+
         unsafe {
-            vao_id = set_up_vao(&coordinates, &indices);
+            vao_id = set_up_vao(&coordinates_task1, &indices);
         }
 
         // Basic usage of shader helper:
@@ -195,8 +211,8 @@ fn main() {
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
                 // Issue the necessary commands to draw your scene here
-
-                gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
+                gl::BindVertexArray(vao_id);
+                gl::DrawElements(gl::TRIANGLES, 18, gl::UNSIGNED_INT, ptr::null());
             }
 
             context.swap_buffers().unwrap();
