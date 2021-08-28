@@ -59,7 +59,7 @@ unsafe fn set_up_vao(coordinates: &Vec<f32>, indices: &Vec<u32>) -> u32 {
         gl::STATIC_DRAW,
     );
 
-    gl::VertexAttribPointer(0, 3, gl::UNSIGNED_BYTE, gl::FALSE, 3, ptr::null());
+    gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
     gl::EnableVertexAttribArray(0);
 
     let mut index_bufferIds: u32 = 0;
@@ -134,7 +134,12 @@ fn main() {
         }
 
         // == // Set up your VAO here
-        unsafe {}
+        let vao_id: u32;
+        let coordinates: Vec<f32> = vec![-0.6, -0.6, 0.0, 0.6, -0.6, 0.0, 0.0, 0.6, 0.0];
+        let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+        unsafe {
+            vao_id = set_up_vao(&coordinates, &indices);
+        }
 
         // Basic usage of shader helper:
         // The example code below returns a shader object, which contains the field `.program_id`.
@@ -144,7 +149,14 @@ fn main() {
         //     shader::ShaderBuilder::new()
         //        .attach_file("./path/to/shader.file")
         //        .link();
-        unsafe {}
+        let shader_pair;
+        unsafe {
+            shader_pair = shader::ShaderBuilder::new()
+                .attach_file("./shaders/simple.vert")
+                .attach_file("./shaders/simple.frag")
+                .link();
+            shader_pair.activate();
+        }
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
@@ -183,6 +195,8 @@ fn main() {
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
                 // Issue the necessary commands to draw your scene here
+
+                gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
             }
 
             context.swap_buffers().unwrap();
