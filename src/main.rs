@@ -43,7 +43,38 @@ fn offset<T>(n: u32) -> *const c_void {
 // ptr::null()
 
 // == // Modify and complete the function below for the first task
-unsafe fn setUpVAO(ARGUMENT_NAME: &Vec<f32>, ARGUMENT_NAME: &Vec<u32>) -> u32 {}
+unsafe fn set_up_vao(coordinates: &Vec<f32>, indices: &Vec<u32>) -> u32 {
+    let mut array: u32 = 0;
+    gl::GenVertexArrays(1, &mut array as *mut u32);
+    gl::BindVertexArray(array);
+
+    let mut bufferIDs: u32 = 0;
+    gl::GenBuffers(1, &mut bufferIDs as *mut u32);
+    gl::BindBuffer(gl::ARRAY_BUFFER, bufferIDs);
+
+    gl::BufferData(
+        gl::ARRAY_BUFFER,
+        byte_size_of_array(coordinates),
+        pointer_to_array(coordinates),
+        gl::STATIC_DRAW,
+    );
+
+    gl::VertexAttribPointer(0, 3, gl::UNSIGNED_BYTE, gl::FALSE, 3, ptr::null());
+    gl::EnableVertexAttribArray(0);
+
+    let mut index_bufferIds: u32 = 0;
+    gl::GenBuffers(1, &mut index_bufferIds as *mut u32);
+    gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, index_bufferIds);
+
+    gl::BufferData(
+        gl::ELEMENT_ARRAY_BUFFER,
+        byte_size_of_array(indices),
+        pointer_to_array(indices),
+        gl::STATIC_DRAW,
+    );
+
+    return array;
+}
 
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
