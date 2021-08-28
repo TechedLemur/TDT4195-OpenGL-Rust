@@ -1,12 +1,18 @@
 extern crate nalgebra_glm as glm;
-use std::{ mem, ptr, os::raw::c_void };
+use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
-use std::sync::{Mutex, Arc, RwLock};
+use std::{mem, os::raw::c_void, ptr};
 
 mod shader;
 mod util;
 
-use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
+use glutin::event::{
+    DeviceEvent,
+    ElementState::{Pressed, Released},
+    Event, KeyboardInput,
+    VirtualKeyCode::{self, *},
+    WindowEvent,
+};
 use glutin::event_loop::ControlFlow;
 
 const SCREEN_W: u32 = 800;
@@ -36,10 +42,8 @@ fn offset<T>(n: u32) -> *const c_void {
 // Get a null pointer (equivalent to an offset of 0)
 // ptr::null()
 
-
-
 // == // Modify and complete the function below for the first task
-// unsafe fn FUNCTION_NAME(ARGUMENT_NAME: &Vec<f32>, ARGUMENT_NAME: &Vec<u32>) -> u32 { } 
+unsafe fn setUpVAO(ARGUMENT_NAME: &Vec<f32>, ARGUMENT_NAME: &Vec<u32>) -> u32 {}
 
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
@@ -48,8 +52,7 @@ fn main() {
         .with_title("Gloom-rs")
         .with_resizable(false)
         .with_inner_size(glutin::dpi::LogicalSize::new(SCREEN_W, SCREEN_H));
-    let cb = glutin::ContextBuilder::new()
-        .with_vsync(true);
+    let cb = glutin::ContextBuilder::new().with_vsync(true);
     let windowed_context = cb.build_windowed(wb, &el).unwrap();
     // Uncomment these if you want to use the mouse for controls, but want it to be confined to the screen and/or invisible.
     // windowed_context.window().set_cursor_grab(true).expect("failed to grab cursor");
@@ -87,15 +90,20 @@ fn main() {
             gl::DebugMessageCallback(Some(util::debug_callback), ptr::null());
 
             // Print some diagnostics
-            println!("{}: {}", util::get_gl_string(gl::VENDOR), util::get_gl_string(gl::RENDERER));
+            println!(
+                "{}: {}",
+                util::get_gl_string(gl::VENDOR),
+                util::get_gl_string(gl::RENDERER)
+            );
             println!("OpenGL\t: {}", util::get_gl_string(gl::VERSION));
-            println!("GLSL\t: {}", util::get_gl_string(gl::SHADING_LANGUAGE_VERSION));
+            println!(
+                "GLSL\t: {}",
+                util::get_gl_string(gl::SHADING_LANGUAGE_VERSION)
+            );
         }
 
         // == // Set up your VAO here
-        unsafe {
-
-        }
+        unsafe {}
 
         // Basic usage of shader helper:
         // The example code below returns a shader object, which contains the field `.program_id`.
@@ -105,9 +113,7 @@ fn main() {
         //     shader::ShaderBuilder::new()
         //        .attach_file("./path/to/shader.file")
         //        .link();
-        unsafe {
-
-        }
+        unsafe {}
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
@@ -127,21 +133,17 @@ fn main() {
                     match key {
                         VirtualKeyCode::A => {
                             _arbitrary_number += delta_time;
-                        },
+                        }
                         VirtualKeyCode::D => {
                             _arbitrary_number -= delta_time;
-                        },
+                        }
 
-
-                        _ => { }
+                        _ => {}
                     }
                 }
             }
             // Handle mouse movement. delta contains the x and y movement of the mouse since last frame in pixels
             if let Ok(mut delta) = mouse_delta.lock() {
-
-
-
                 *delta = (0.0, 0.0);
             }
 
@@ -150,11 +152,6 @@ fn main() {
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
                 // Issue the necessary commands to draw your scene here
-
-
-
-
-
             }
 
             context.swap_buffers().unwrap();
@@ -185,13 +182,26 @@ fn main() {
         }
 
         match event {
-            Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
+            Event::WindowEvent {
+                event: WindowEvent::CloseRequested,
+                ..
+            } => {
                 *control_flow = ControlFlow::Exit;
-            },
+            }
             // Keep track of currently pressed keys to send to the rendering thread
-            Event::WindowEvent { event: WindowEvent::KeyboardInput {
-                input: KeyboardInput { state: key_state, virtual_keycode: Some(keycode), .. }, .. }, .. } => {
-
+            Event::WindowEvent {
+                event:
+                    WindowEvent::KeyboardInput {
+                        input:
+                            KeyboardInput {
+                                state: key_state,
+                                virtual_keycode: Some(keycode),
+                                ..
+                            },
+                        ..
+                    },
+                ..
+            } => {
                 if let Ok(mut keys) = arc_pressed_keys.lock() {
                     match key_state {
                         Released => {
@@ -199,7 +209,7 @@ fn main() {
                                 let i = keys.iter().position(|&k| k == keycode).unwrap();
                                 keys.remove(i);
                             }
-                        },
+                        }
                         Pressed => {
                             if !keys.contains(&keycode) {
                                 keys.push(keycode);
@@ -212,20 +222,23 @@ fn main() {
                 match keycode {
                     Escape => {
                         *control_flow = ControlFlow::Exit;
-                    },
+                    }
                     Q => {
                         *control_flow = ControlFlow::Exit;
                     }
-                    _ => { }
+                    _ => {}
                 }
-            },
-            Event::DeviceEvent { event: DeviceEvent::MouseMotion { delta }, .. } => {
+            }
+            Event::DeviceEvent {
+                event: DeviceEvent::MouseMotion { delta },
+                ..
+            } => {
                 // Accumulate mouse movement
                 if let Ok(mut position) = arc_mouse_delta.lock() {
                     *position = (position.0 + delta.0 as f32, position.1 + delta.1 as f32);
                 }
-            },
-            _ => { }
+            }
+            _ => {}
         }
     });
 }
