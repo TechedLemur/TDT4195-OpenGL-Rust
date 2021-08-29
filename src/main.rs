@@ -82,6 +82,41 @@ fn task2b_triangles() -> (Vec<f32>, Vec<u32>) {
 
     return (coordinates_task1, indices);
 }
+
+fn circle_coordinates(
+    x: f32,
+    y: f32,
+    z: f32,
+    radius: f32,
+    resolution: u32,
+) -> (Vec<f32>, Vec<u32>) {
+    let mut coordinates = vec![x, y, z];
+    let mut indices: Vec<u32> = vec![0];
+
+    for i in 0..resolution + 1 {
+        let t = -2.0 * std::f32::consts::PI * (i as f32) / (resolution as f32);
+        let x1 = x + radius * f32::sin(t);
+        let y2 = y + radius * f32::cos(t);
+
+        indices.push((i + 1) as u32);
+        coordinates.extend(vec![x1, y2, 0.0]);
+    }
+    return (coordinates, indices);
+}
+
+fn sine_function(min: f32, max: f32, resolution: u32) -> (Vec<f32>, Vec<u32>) {
+    let mut coordinates = Vec::new();
+    let mut indices: Vec<u32> = Vec::new();
+    let len = max - min;
+    for i in 0..resolution {
+        let x = min + (i as f32) * len / (resolution as f32);
+        let y = 0.7 * f32::sin(20.0 * (i as f32) * len / (resolution as f32));
+        coordinates.extend(vec![x, y, 0.0]);
+        indices.push(i)
+    }
+    return (coordinates, indices);
+}
+
 // == // Modify and complete the function below for the first task
 unsafe fn set_up_vao(coordinates: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     let mut array: u32 = 0;
@@ -176,8 +211,11 @@ fn main() {
         // == // Set up your VAO here
         let vao_id: u32;
 
-        let (coordinates, indices) = task2b_triangles();
-
+        let (coordinates, indices) = circle_coordinates(0.0, 0.0, 0.0, 0.5, 400);
+        // let (coordinates, indices) = sine_function(-0.8, 0.8, 500);
+        // println!("{:?}", coordinates);
+        // println!("{:?}", indices);
+        let count = indices.len() as i32;
         unsafe {
             vao_id = set_up_vao(&coordinates, &indices);
         }
@@ -204,6 +242,11 @@ fn main() {
 
         let first_frame_time = std::time::Instant::now();
         let mut last_frame_time = first_frame_time;
+
+        // init rgb values for uniform in fragment shader
+        let mut r: u32 = 500;
+        let mut g: u32 = 500;
+        let mut b: u32 = 500;
         // The main rendering loop
         loop {
             let now = std::time::Instant::now();
@@ -232,12 +275,19 @@ fn main() {
             }
 
             unsafe {
-                gl::ClearColor(0.76862745, 0.71372549, 0.94901961, 1.0); // moon raker, full opacity
+                // gl::ClearColor(0.76862745, 0.71372549, 0.94901961, 1.0); // moon raker, full opacity
+                gl::ClearColor(0.6, 0.71372549, 0.94901961, 0.7);
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
                 // Issue the necessary commands to draw your scene here
                 gl::BindVertexArray(vao_id);
-                gl::DrawElements(gl::TRIANGLES, 18, gl::UNSIGNED_INT, ptr::null());
+                gl::DrawElements(gl::TRIANGLE_FAN, count, gl::UNSIGNED_INT, ptr::null());
+
+                // Change color each frame. Just restarting each color from 0 after max, as implementing both directions requires more effort.
+                r = (r + 1) % 5000;
+                g = (g + 3) % 5000;
+                b = (b + 5) % 5000;
+                gl::Uniform3f(1, r as f32 / 5000.0, g as f32 / 5000.0, b as f32 / 5000.0);
             }
 
             context.swap_buffers().unwrap();
