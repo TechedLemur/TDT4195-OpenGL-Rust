@@ -281,13 +281,15 @@ fn main() {
 
                 // Issue the necessary commands to draw your scene here
                 gl::BindVertexArray(vao_id);
-                gl::DrawElements(gl::TRIANGLE_FAN, count, gl::UNSIGNED_INT, ptr::null());
+                gl::DrawElements(gl::TRIANGLE_FAN, count, gl::UNSIGNED_INT, ptr::null()); // For circle
+                // gl::DrawElements(gl::LINE_STRIP, count, gl::UNSIGNED_INT, ptr::null()); // For sine function
 
                 // Change color each frame. Just restarting each color from 0 after max, as implementing both directions requires more effort.
                 r = (r + 1) % 5000;
                 g = (g + 3) % 5000;
                 b = (b + 5) % 5000;
-                gl::Uniform3f(1, r as f32 / 5000.0, g as f32 / 5000.0, b as f32 / 5000.0);
+                let location = shader_pair.get_uniform_location("uColor");
+                gl::Uniform3f(location, r as f32 / 5000.0, g as f32 / 5000.0, b as f32 / 5000.0);
             }
 
             context.swap_buffers().unwrap();
