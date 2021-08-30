@@ -1,4 +1,4 @@
-#version 430 core
+#version 450 core
 
 in vec3 position;
 vec3 mirrorVector = vec3(-1.0, -1.0, 1.0);

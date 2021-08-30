@@ -1,6 +1,6 @@
-#version 430 core
+#version 450 core
 
-uniform layout(location = 1) vec3 uColor = vec3(0.9f, 0.2f, 0.1f);
+uniform vec3 uColor = vec3(0.9f, 0.2f, 0.1f);
 out vec4 color;
 
 void main()
