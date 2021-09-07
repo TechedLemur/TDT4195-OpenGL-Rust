@@ -119,9 +119,9 @@ fn sine_function(min: f32, max: f32, resolution: u32) -> (Vec<f32>, Vec<u32>) {
 
 // == // Modify and complete the function below for the first task
 unsafe fn set_up_vao(coordinates: &Vec<f32>, indices: &Vec<u32>) -> u32 {
-    let mut array: u32 = 0;
-    gl::GenVertexArrays(1, &mut array as *mut u32);
-    gl::BindVertexArray(array);
+    let mut arrayID: u32 = 0;
+    gl::GenVertexArrays(1, &mut arrayID as *mut u32);
+    gl::BindVertexArray(arrayID);
 
     let mut bufferIDs: u32 = 0;
     gl::GenBuffers(1, &mut bufferIDs as *mut u32);
@@ -148,7 +148,7 @@ unsafe fn set_up_vao(coordinates: &Vec<f32>, indices: &Vec<u32>) -> u32 {
         gl::STATIC_DRAW,
     );
 
-    return array;
+    return arrayID;
 }
 
 fn main() {
@@ -213,28 +213,21 @@ fn main() {
 
         let (coordinates, indices) = circle_coordinates(0.0, 0.0, 0.0, 0.5, 400);
         // let (coordinates, indices) = sine_function(-0.8, 0.8, 500);
-        // println!("{:?}", coordinates);
-        // println!("{:?}", indices);
         let count = indices.len() as i32;
         unsafe {
-            vao_id = set_up_vao(&coordinates, &indices);
+            vao_id = set_up_vao(&coordinates, &indices); // set up the vertex array object
         }
 
-        // Basic usage of shader helper:
-        // The example code below returns a shader object, which contains the field `.program_id`.
-        // The snippet is not enough to do the assignment, and will need to be modified (outside of
-        // just using the correct path), but it only needs to be called once
-        //
-        //     shader::ShaderBuilder::new()
-        //        .attach_file("./path/to/shader.file")
-        //        .link();
+
+        
+        // Use ShaderBuilder to load and link shaders
         let shader_pair;
         unsafe {
             shader_pair = shader::ShaderBuilder::new()
                 .attach_file("./shaders/simple.vert")
                 .attach_file("./shaders/simple.frag")
                 .link();
-            shader_pair.activate();
+            shader_pair.activate(); // activate shaders
         }
 
         // Used to demonstrate keyboard handling -- feel free to remove
@@ -279,17 +272,21 @@ fn main() {
                 gl::ClearColor(0.6, 0.71372549, 0.94901961, 0.7);
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-                // Issue the necessary commands to draw your scene here
                 gl::BindVertexArray(vao_id);
+                // Draw elements
                 gl::DrawElements(gl::TRIANGLE_FAN, count, gl::UNSIGNED_INT, ptr::null()); // For circle
                 // gl::DrawElements(gl::LINE_STRIP, count, gl::UNSIGNED_INT, ptr::null()); // For sine function
 
                 // Change color each frame. Just restarting each color from 0 after max, as implementing both directions requires more effort.
-                r = (r + 1) % 5000;
-                g = (g + 3) % 5000;
-                b = (b + 5) % 5000;
-                let location = shader_pair.get_uniform_location("uColor");
-                gl::Uniform3f(location, r as f32 / 5000.0, g as f32 / 5000.0, b as f32 / 5000.0);
+                r = (r + 10) % 5000;
+                g = (g + 30) % 5000;
+                b = (b + 50) % 5000;
+                let mut location = shader_pair.get_uniform_location("uColor");
+                gl::Uniform3f(location, r as f32 / 5000.0, g as f32 / 5000.0, b as f32 / 5000.0); 
+                
+                location = shader_pair.get_uniform_location("scaler");
+                gl::Uniform3f(location, r as f32 / 3000.0, g as f32 / 3000.0, 1.0); // Change size with time
+
             }
 
             context.swap_buffers().unwrap();
