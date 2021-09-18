@@ -44,9 +44,9 @@ fn offset<T>(n: u32) -> *const c_void {
 
 fn task1_triangles() -> (Vec<f32>, Vec<u32>, Vec<f32>) {
     // Have separate objects for each triangle to make it easier to read and modify
-    let triangle1: Vec<f32> = vec![-0.2, -0.2, 0.0, 0.2, -0.1, 0.0, 0.0, 0.5, 0.0];
-    let triangle2: Vec<f32> = vec![-0.9, -0.6, 0.0, -0.5, -0.6, 0.0, -0.7, 0.2, 0.0];
-    let triangle3: Vec<f32> = vec![-0.8, 0.6, 0.0, -0.7, 0.4, 0.0, -0.6, 0.6, 0.0];
+    let triangle1: Vec<f32> = vec![-0.2, -0.2, 0.5, 0.6, -0.1, 0.5, 0.0, 0.5, 0.5];
+    let triangle2: Vec<f32> = vec![-0.5, -0.6, 0.0, 0.5, -0.6, 0.0, 0.0, 0.2, 0.0];
+    let triangle3: Vec<f32> = vec![-0.6, 0.0, 0.1,  0.4, -0.5, 0.1, -0.3, 0.6, 0.1];
     // let triangle4: Vec<f32> = vec![0.7, -0.5, 0.0, 0.9, -0.3, 0.0, 0.7, -0.1, 0.0];
     // let triangle5: Vec<f32> = vec![0.25, 0.25, 0.0, 0.95, 0.7, 0.0, 0.3, 0.8, 0.0];
     // let triangle6: Vec<f32> = vec![0.0, -0.6, 0.0, 0.5, -0.7, 0.0, 0.3, -0.5, 0.0];
@@ -66,17 +66,19 @@ fn task1_triangles() -> (Vec<f32>, Vec<u32>, Vec<f32>) {
 
     let mut colors: Vec<f32> = Vec::new();
     //Triangle 1
-    colors.extend(vec![1.0, 0.0, 0.0, 1.0]);
-    colors.extend(vec![1.0, 1.0, 0.0, 1.0]);
-    colors.extend(vec![0.0, 1.0, 1.0, 1.0]);
+    
+    colors.extend(vec![0.0, 0.0, 1.0, 0.6]);
+    colors.extend(vec![0.0, 0.0, 1.0, 0.6]);
+    colors.extend(vec![0.0, 0.0, 1.0, 0.6]);
+    colors.extend(vec![0.0, 1.0, 0.0, 0.5]);
+    colors.extend(vec![0.0, 1.0, 0.0, 0.5]);
+    colors.extend(vec![0.0, 1.0, 0.0, 0.5]);
+    
     //Triangle 2
-    colors.extend(vec![1.0, 0.0, 1.0, 1.0]);
-    colors.extend(vec![0.4, 0.7, 0.6, 1.0]);
-    colors.extend(vec![0.9, 0.8, 0.4, 1.0]);
+    colors.extend(vec![1.0, 0.0, 0.0, 0.7]);
+    colors.extend(vec![1.0, 0.0, 0.0, 0.7]);
+    colors.extend(vec![1.0, 0.0, 0.0, 0.7]);
     //Triangle 3
-    colors.extend(vec![1.0, 1.0, 1.0, 1.0]);
-    colors.extend(vec![0.8, 1.0, 0.7, 1.0]);
-    colors.extend(vec![0.8, 0.4, 0.2, 1.0]);
 
     return (coordinates_task1, indices, colors);
 }
@@ -264,9 +266,7 @@ fn main() {
         let mut last_frame_time = first_frame_time;
 
         // init rgb values for uniform in fragment shader
-        let mut r: u32 = 500;
-        let mut g: u32 = 500;
-        let mut b: u32 = 500;
+        
         // The main rendering loop
         loop {
             let now = std::time::Instant::now();
