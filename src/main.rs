@@ -42,25 +42,43 @@ fn offset<T>(n: u32) -> *const c_void {
 // Get a null pointer (equivalent to an offset of 0)
 // ptr::null()
 
-fn task1_triangles() -> (Vec<f32>, Vec<u32>) {
+fn task1_triangles() -> (Vec<f32>, Vec<u32>, Vec<f32>) {
     // Have separate objects for each triangle to make it easier to read and modify
     let triangle1: Vec<f32> = vec![-0.2, -0.2, 0.0, 0.2, -0.1, 0.0, 0.0, 0.5, 0.0];
     let triangle2: Vec<f32> = vec![-0.9, -0.6, 0.0, -0.5, -0.6, 0.0, -0.7, 0.2, 0.0];
     let triangle3: Vec<f32> = vec![-0.8, 0.6, 0.0, -0.7, 0.4, 0.0, -0.6, 0.6, 0.0];
-    let triangle4: Vec<f32> = vec![0.7, -0.5, 0.0, 0.9, -0.3, 0.0, 0.7, -0.1, 0.0];
-    let triangle5: Vec<f32> = vec![0.25, 0.25, 0.0, 0.95, 0.7, 0.0, 0.3, 0.8, 0.0];
-    let triangle6: Vec<f32> = vec![0.0, -0.6, 0.0, 0.5, -0.7, 0.0, 0.3, -0.5, 0.0];
+    // let triangle4: Vec<f32> = vec![0.7, -0.5, 0.0, 0.9, -0.3, 0.0, 0.7, -0.1, 0.0];
+    // let triangle5: Vec<f32> = vec![0.25, 0.25, 0.0, 0.95, 0.7, 0.0, 0.3, 0.8, 0.0];
+    // let triangle6: Vec<f32> = vec![0.0, -0.6, 0.0, 0.5, -0.7, 0.0, 0.3, -0.5, 0.0];
     let mut coordinates_task1: Vec<f32> = Vec::new();
     coordinates_task1.extend(&triangle1);
     coordinates_task1.extend(&triangle2);
     coordinates_task1.extend(&triangle3);
-    coordinates_task1.extend(&triangle4);
-    coordinates_task1.extend(&triangle5);
-    coordinates_task1.extend(&triangle6);
+    // coordinates_task1.extend(&triangle4);
+    // coordinates_task1.extend(&triangle5);
+    // coordinates_task1.extend(&triangle6);
 
     let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
 
-    return (coordinates_task1, indices);
+    let red: Vec<f32> = vec![1.0, 0.0, 0.0, 1.0];
+    let green: Vec<f32> = vec![0.0, 1.0, 0.0, 1.0];
+    let blue: Vec<f32> = vec![0.0, 0.0, 1.0, 1.0];
+
+    let mut colors: Vec<f32> = Vec::new();
+    //Triangle 1
+    colors.extend(vec![1.0, 0.0, 0.0, 1.0]);
+    colors.extend(vec![1.0, 1.0, 0.0, 1.0]);
+    colors.extend(vec![0.0, 1.0, 1.0, 1.0]);
+    //Triangle 2
+    colors.extend(vec![1.0, 0.0, 1.0, 1.0]);
+    colors.extend(vec![0.4, 0.7, 0.6, 1.0]);
+    colors.extend(vec![0.9, 0.8, 0.4, 1.0]);
+    //Triangle 3
+    colors.extend(vec![1.0, 1.0, 1.0, 1.0]);
+    colors.extend(vec![0.8, 1.0, 0.7, 1.0]);
+    colors.extend(vec![0.8, 0.4, 0.2, 1.0]);
+
+    return (coordinates_task1, indices, colors);
 }
 
 fn task2_triangle() -> (Vec<f32>, Vec<u32>) {
@@ -118,7 +136,7 @@ fn sine_function(min: f32, max: f32, resolution: u32) -> (Vec<f32>, Vec<u32>) {
 }
 
 // == // Modify and complete the function below for the first task
-unsafe fn set_up_vao(coordinates: &Vec<f32>, indices: &Vec<u32>) -> u32 {
+unsafe fn set_up_vao(coordinates: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) -> u32 {
     let mut arrayID: u32 = 0;
     gl::GenVertexArrays(1, &mut arrayID as *mut u32);
     gl::BindVertexArray(arrayID);
@@ -133,10 +151,22 @@ unsafe fn set_up_vao(coordinates: &Vec<f32>, indices: &Vec<u32>) -> u32 {
         pointer_to_array(coordinates),
         gl::STATIC_DRAW,
     );
-
     gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 12, ptr::null());
     gl::EnableVertexAttribArray(0);
+    // Set up color buffer
+    let mut color_bufferIds: u32 = 0;
+    gl::GenBuffers(1, &mut color_bufferIds as *mut u32);
+    gl::BindBuffer(gl::ARRAY_BUFFER, color_bufferIds);
 
+    gl::BufferData(
+        gl::ARRAY_BUFFER,
+        byte_size_of_array(colors),
+        pointer_to_array(colors),
+        gl::STATIC_DRAW,
+    );
+
+    gl::VertexAttribPointer(1, 4, gl::FLOAT, gl::FALSE, 16, ptr::null());
+    gl::EnableVertexAttribArray(1);
     let mut index_bufferIds: u32 = 0;
     gl::GenBuffers(1, &mut index_bufferIds as *mut u32);
     gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, index_bufferIds);
@@ -147,7 +177,6 @@ unsafe fn set_up_vao(coordinates: &Vec<f32>, indices: &Vec<u32>) -> u32 {
         pointer_to_array(indices),
         gl::STATIC_DRAW,
     );
-
     return arrayID;
 }
 
@@ -208,18 +237,6 @@ fn main() {
             );
         }
 
-        // == // Set up your VAO here
-        let vao_id: u32;
-
-        let (coordinates, indices) = circle_coordinates(0.0, 0.0, 0.0, 0.5, 400);
-        // let (coordinates, indices) = sine_function(-0.8, 0.8, 500);
-        let count = indices.len() as i32;
-        unsafe {
-            vao_id = set_up_vao(&coordinates, &indices); // set up the vertex array object
-        }
-
-
-        
         // Use ShaderBuilder to load and link shaders
         let shader_pair;
         unsafe {
@@ -228,6 +245,16 @@ fn main() {
                 .attach_file("./shaders/simple.frag")
                 .link();
             shader_pair.activate(); // activate shaders
+        }
+        // == // Set up your VAO here
+        let vao_id: u32;
+
+        let (coordinates, indices, colors) = task1_triangles();
+        //let (coordinates, indices) = circle_coordinates(0.0, 0.0, 0.0, 0.5, 400);
+        // let (coordinates, indices) = sine_function(-0.8, 0.8, 500);
+        let count = indices.len() as i32;
+        unsafe {
+            vao_id = set_up_vao(&coordinates, &indices, &colors); // set up the vertex array object
         }
 
         // Used to demonstrate keyboard handling -- feel free to remove
@@ -274,19 +301,25 @@ fn main() {
 
                 gl::BindVertexArray(vao_id);
                 // Draw elements
-                gl::DrawElements(gl::TRIANGLE_FAN, count, gl::UNSIGNED_INT, ptr::null()); // For circle
+                gl::DrawElements(gl::TRIANGLES, count, gl::UNSIGNED_INT, ptr::null());
+                // For circle
                 // gl::DrawElements(gl::LINE_STRIP, count, gl::UNSIGNED_INT, ptr::null()); // For sine function
 
                 // Change color each frame. Just restarting each color from 0 after max, as implementing both directions requires more effort.
-                r = (r + 10) % 5000;
-                g = (g + 30) % 5000;
-                b = (b + 50) % 5000;
-                let mut location = shader_pair.get_uniform_location("uColor");
-                gl::Uniform3f(location, r as f32 / 5000.0, g as f32 / 5000.0, b as f32 / 5000.0); 
-                
-                location = shader_pair.get_uniform_location("scaler");
-                gl::Uniform3f(location, r as f32 / 3000.0, g as f32 / 3000.0, 1.0); // Change size with time
+                // r = (r + 10) % 5000;
+                //g = (g + 30) % 5000;
+                //b = (b + 50) % 5000;
+                // let mut location = shader_pair.get_uniform_location("uColor");
+                // gl::Uniform3f(
+                //   location,
+                //   r as f32 / 5000.0,
+                //  g as f32 / 5000.0,
+                //  b as f32 / 5000.0,
+                // );
 
+                //  location = shader_pair.get_uniform_location("scaler");
+                // gl::Uniform3f(location, r as f32 / 3000.0, g as f32 / 3000.0, 1.0);
+                // Change size with time
             }
 
             context.swap_buffers().unwrap();
