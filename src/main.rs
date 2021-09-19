@@ -45,8 +45,8 @@ fn offset<T>(n: u32) -> *const c_void {
 fn task1_triangles() -> (Vec<f32>, Vec<u32>, Vec<f32>) {
     // Have separate objects for each triangle to make it easier to read and modify
     let triangle1: Vec<f32> = vec![-0.2, -0.2, 0.5, 0.6, -0.1, 0.5, 0.0, 0.5, 0.5];
-    let triangle2: Vec<f32> = vec![-0.5, -0.6, 0.0, 0.5, -0.6, 0.0, 0.0, 0.2, 0.0];
-    let triangle3: Vec<f32> = vec![-0.6, 0.0, 0.1,  0.4, -0.5, 0.1, -0.3, 0.6, 0.1];
+    let triangle2: Vec<f32> = vec![-0.5, -0.6, 0.3, 0.5, -0.6, 0.3, 0.0, 0.2, 0.3];
+    let triangle3: Vec<f32> = vec![-0.6, 0.0, 0.1, 0.4, -0.5, 0.1, -0.3, 0.6, 0.1];
     // let triangle4: Vec<f32> = vec![0.7, -0.5, 0.0, 0.9, -0.3, 0.0, 0.7, -0.1, 0.0];
     // let triangle5: Vec<f32> = vec![0.25, 0.25, 0.0, 0.95, 0.7, 0.0, 0.3, 0.8, 0.0];
     // let triangle6: Vec<f32> = vec![0.0, -0.6, 0.0, 0.5, -0.7, 0.0, 0.3, -0.5, 0.0];
@@ -66,14 +66,12 @@ fn task1_triangles() -> (Vec<f32>, Vec<u32>, Vec<f32>) {
 
     let mut colors: Vec<f32> = Vec::new();
     //Triangle 1
-    
     colors.extend(vec![0.0, 0.0, 1.0, 0.6]);
     colors.extend(vec![0.0, 0.0, 1.0, 0.6]);
     colors.extend(vec![0.0, 0.0, 1.0, 0.6]);
     colors.extend(vec![0.0, 1.0, 0.0, 0.5]);
     colors.extend(vec![0.0, 1.0, 0.0, 0.5]);
     colors.extend(vec![0.0, 1.0, 0.0, 0.5]);
-    
     //Triangle 2
     colors.extend(vec![1.0, 0.0, 0.0, 0.7]);
     colors.extend(vec![1.0, 0.0, 0.0, 0.7]);
@@ -257,6 +255,7 @@ fn main() {
         let count = indices.len() as i32;
         unsafe {
             vao_id = set_up_vao(&coordinates, &indices, &colors); // set up the vertex array object
+            gl::BindVertexArray(vao_id);
         }
 
         // Used to demonstrate keyboard handling -- feel free to remove
@@ -266,7 +265,6 @@ fn main() {
         let mut last_frame_time = first_frame_time;
 
         // init rgb values for uniform in fragment shader
-        
         // The main rendering loop
         loop {
             let now = std::time::Instant::now();
@@ -299,27 +297,14 @@ fn main() {
                 gl::ClearColor(0.6, 0.71372549, 0.94901961, 0.7);
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-                gl::BindVertexArray(vao_id);
+                let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0, 1.0, -20.0));
+                let perspective: glm::Mat4 = glm::perspective(1.0, 1.0, 1.0, 100.0);
+
+                let matrix: glm::Mat4 = perspective * scaling;
+                let location = shader_pair.get_uniform_location("matrix");
+                gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
                 // Draw elements
                 gl::DrawElements(gl::TRIANGLES, count, gl::UNSIGNED_INT, ptr::null());
-                // For circle
-                // gl::DrawElements(gl::LINE_STRIP, count, gl::UNSIGNED_INT, ptr::null()); // For sine function
-
-                // Change color each frame. Just restarting each color from 0 after max, as implementing both directions requires more effort.
-                // r = (r + 10) % 5000;
-                //g = (g + 30) % 5000;
-                //b = (b + 50) % 5000;
-                // let mut location = shader_pair.get_uniform_location("uColor");
-                // gl::Uniform3f(
-                //   location,
-                //   r as f32 / 5000.0,
-                //  g as f32 / 5000.0,
-                //  b as f32 / 5000.0,
-                // );
-
-                //  location = shader_pair.get_uniform_location("scaler");
-                // gl::Uniform3f(location, r as f32 / 3000.0, g as f32 / 3000.0, 1.0);
-                // Change size with time
             }
 
             context.swap_buffers().unwrap();

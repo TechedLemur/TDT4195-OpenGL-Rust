@@ -6,10 +6,13 @@ in layout(location=1) vec4 color;
 
 out layout(location=2) vec4 outColor;
 //vec3 mirrorVector = vec3(-1.0, -1.0, 1.0);
-//uniform vec3 scaler = vec3(1.0f,1.0f,1.0f);
+uniform float oscilator = 0.5;
+
+uniform mat4x4 matrix = {{1.0,0.0,0.0,0.0}, {0.0,1.0,0.0,0.0}, {0.0,0.0,1.0,0.0}, {0.0,0.0,0.0,1.0}};
+
 void main()
 {
     //gl_Position = vec4(position*scaler, 1.0f);
-    gl_Position = vec4(position, 1.0f);
+    gl_Position = matrix * vec4(position, 1.0f) ;
     outColor = color;
 }
