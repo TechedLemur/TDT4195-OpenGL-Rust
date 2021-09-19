@@ -263,8 +263,12 @@ fn main() {
 
         let first_frame_time = std::time::Instant::now();
         let mut last_frame_time = first_frame_time;
-
-        // init rgb values for uniform in fragment shader
+        
+        let mut x:f32 = 0.0;
+        let mut y:f32 = 0.0;
+        let mut z:f32 = 0.0;
+        let mut yaw:f32 = 0.0;
+        let mut pitch:f32 = 0.0;
         // The main rendering loop
         loop {
             let now = std::time::Instant::now();
@@ -277,10 +281,34 @@ fn main() {
                 for key in keys.iter() {
                     match key {
                         VirtualKeyCode::A => {
-                            _arbitrary_number += delta_time;
+                            x += delta_time;
                         }
                         VirtualKeyCode::D => {
-                            _arbitrary_number -= delta_time;
+                            x -= delta_time;
+                        }
+                        VirtualKeyCode::W => {
+                            y -= delta_time;
+                        }
+                        VirtualKeyCode::S => {
+                            y += delta_time;
+                        }
+                        VirtualKeyCode::Q => {
+                            z += 5.0* delta_time;
+                        }
+                        VirtualKeyCode::E => {
+                            z -= 5.0*delta_time;
+                        }
+                        VirtualKeyCode::Up => {
+                            yaw -=0.5* delta_time;
+                        }
+                        VirtualKeyCode::Down => {
+                            yaw +=0.5* delta_time;
+                        }
+                        VirtualKeyCode::Left => {
+                            pitch -=0.5* delta_time;
+                        }
+                        VirtualKeyCode::Right => {
+                            pitch +=0.5* delta_time;
                         }
 
                         _ => {}
@@ -298,9 +326,12 @@ fn main() {
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
                 let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0, 1.0, -20.0));
+                let translation: glm::Mat4 = glm::translation(&glm::vec3(2.0*x,2.0*y,2.0*z-0.0));
                 let perspective: glm::Mat4 = glm::perspective(1.0, 1.0, 1.0, 100.0);
-
-                let matrix: glm::Mat4 = perspective * scaling;
+                let yaw_rotation: glm::Mat4 = glm::rotation(yaw, &glm::vec3(1.0,0.0,0.0));
+                let pitch_rotation: glm::Mat4 = glm::rotation(pitch, &glm::vec3(0.0,1.0,0.0));
+                let camera_centering: glm::Mat4 = glm::translation(&glm::vec3(-x, -y, -z+0.0));
+                let matrix: glm::Mat4 = perspective  *translation*yaw_rotation*pitch_rotation*camera_centering* scaling ;
                 let location = shader_pair.get_uniform_location("matrix");
                 gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
                 // Draw elements
@@ -376,9 +407,7 @@ fn main() {
                     Escape => {
                         *control_flow = ControlFlow::Exit;
                     }
-                    Q => {
-                        *control_flow = ControlFlow::Exit;
-                    }
+                    
                     _ => {}
                 }
             }
