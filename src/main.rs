@@ -46,7 +46,7 @@ fn task1_triangles() -> (Vec<f32>, Vec<u32>, Vec<f32>) {
     // Have separate objects for each triangle to make it easier to read and modify
     let triangle1: Vec<f32> = vec![-0.2, -0.2, 0.5, 0.6, -0.1, 0.5, 0.0, 0.5, 0.5];
     let triangle2: Vec<f32> = vec![-0.5, -0.6, 0.3, 0.5, -0.6, 0.3, 0.0, 0.2, 0.3];
-    let triangle3: Vec<f32> = vec![-0.6, 0.0, 0.1, 0.4, -0.5, 0.1, -0.3, 0.6, 0.1];
+    let triangle3: Vec<f32> = vec![-0.0, 0.0, 0.0, 0.4, -0.5, 0.1, -0.3, 0.6, 0.1];
     // let triangle4: Vec<f32> = vec![0.7, -0.5, 0.0, 0.9, -0.3, 0.0, 0.7, -0.1, 0.0];
     // let triangle5: Vec<f32> = vec![0.25, 0.25, 0.0, 0.95, 0.7, 0.0, 0.3, 0.8, 0.0];
     // let triangle6: Vec<f32> = vec![0.0, -0.6, 0.0, 0.5, -0.7, 0.0, 0.3, -0.5, 0.0];
@@ -287,22 +287,26 @@ fn main() {
                             x -= delta_time;
                         }
                         VirtualKeyCode::W => {
-                            y -= delta_time;
-                        }
-                        VirtualKeyCode::S => {
-                            y += delta_time;
-                        }
-                        VirtualKeyCode::Q => {
                             z += delta_time;
                         }
-                        VirtualKeyCode::E => {
+                        VirtualKeyCode::S => {
                             z -= delta_time;
                         }
+                        VirtualKeyCode::Q => {
+                            y += delta_time;
+                        }
+                        VirtualKeyCode::E => {
+                            y -= delta_time;
+                        }
                         VirtualKeyCode::Up => {
-                            yaw -= delta_time;
+                            if yaw > -1.5 {
+                                yaw -= delta_time;
+                            }
                         }
                         VirtualKeyCode::Down => {
-                            yaw += delta_time;
+                            if yaw < 1.5 {
+                                yaw += delta_time;
+                            }
                         }
                         VirtualKeyCode::Left => {
                             pitch -= delta_time;
@@ -325,13 +329,13 @@ fn main() {
                 gl::ClearColor(0.6, 0.71372549, 0.94901961, 0.7);
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-                let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0, 1.0, -20.0));
-                let translation: glm::Mat4 = glm::translation(&glm::vec3(x, y, z));
+                //let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0, 1.0, -20.0));
+                let translation: glm::Mat4 = glm::translation(&glm::vec3(x, y, z - 5.0));
                 let perspective: glm::Mat4 = glm::perspective(1.0, 1.0, 1.0, 100.0);
                 let yaw_rotation: glm::Mat4 = glm::rotation(yaw, &glm::vec3(1.0, 0.0, 0.0));
                 let pitch_rotation: glm::Mat4 = glm::rotation(pitch, &glm::vec3(0.0, 1.0, 0.0));
-                let matrix: glm::Mat4 =
-                    perspective * pitch_rotation * yaw_rotation * translation * scaling;
+
+                let matrix: glm::Mat4 = perspective * pitch_rotation * yaw_rotation * translation;
                 let location = shader_pair.get_uniform_location("matrix");
                 gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
                 // Draw elements
