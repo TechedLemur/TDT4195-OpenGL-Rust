@@ -331,7 +331,7 @@ fn main() {
 
                 //let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0, 1.0, -20.0));
                 let translation: glm::Mat4 = glm::translation(&glm::vec3(x, y, z - 5.0));
-                let perspective: glm::Mat4 = glm::perspective(1.0, 1.0, 1.0, 100.0);
+                let perspective: glm::Mat4 = glm::perspective(SCREEN_W as f32 / SCREEN_H as f32, 1.0, 1.0, 100.0);
                 let yaw_rotation: glm::Mat4 = glm::rotation(yaw, &glm::vec3(1.0, 0.0, 0.0));
                 let pitch_rotation: glm::Mat4 = glm::rotation(pitch, &glm::vec3(0.0, 1.0, 0.0));
 
