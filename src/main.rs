@@ -58,7 +58,7 @@ fn task1_triangles() -> (Vec<f32>, Vec<u32>, Vec<f32>) {
     // coordinates_task1.extend(&triangle5);
     // coordinates_task1.extend(&triangle6);
 
-    let indices: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 2, 1, 3, 5, 4, 6, 8, 7];
+    let indices: Vec<u32> = vec![6, 7, 8, 3, 4, 5, 0, 1, 2, 0, 2, 1, 3, 5, 4, 6, 8, 7];
 
     let red: Vec<f32> = vec![1.0, 0.0, 0.0, 1.0];
     let green: Vec<f32> = vec![0.0, 1.0, 0.0, 1.0];
@@ -331,7 +331,8 @@ fn main() {
 
                 //let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0, 1.0, -20.0));
                 let translation: glm::Mat4 = glm::translation(&glm::vec3(x, y, z - 5.0));
-                let perspective: glm::Mat4 = glm::perspective(SCREEN_W as f32 / SCREEN_H as f32, 1.0, 1.0, 100.0);
+                let perspective: glm::Mat4 =
+                    glm::perspective(SCREEN_W as f32 / SCREEN_H as f32, 1.0, 1.0, 100.0);
                 let yaw_rotation: glm::Mat4 = glm::rotation(yaw, &glm::vec3(1.0, 0.0, 0.0));
                 let pitch_rotation: glm::Mat4 = glm::rotation(pitch, &glm::vec3(0.0, 1.0, 0.0));
 
