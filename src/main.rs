@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::{mem, os::raw::c_void, ptr};
 
+mod mesh;
 mod shader;
 mod util;
 
@@ -136,7 +137,12 @@ fn sine_function(min: f32, max: f32, resolution: u32) -> (Vec<f32>, Vec<u32>) {
 }
 
 // == // Modify and complete the function below for the first task
-unsafe fn set_up_vao(coordinates: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) -> u32 {
+unsafe fn set_up_vao(
+    coordinates: &Vec<f32>,
+    indices: &Vec<u32>,
+    colors: &Vec<f32>,
+    normals: &Vec<f32>,
+) -> u32 {
     let mut arrayID: u32 = 0;
     gl::GenVertexArrays(1, &mut arrayID as *mut u32);
     gl::BindVertexArray(arrayID);
@@ -167,6 +173,20 @@ unsafe fn set_up_vao(coordinates: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f3
 
     gl::VertexAttribPointer(1, 4, gl::FLOAT, gl::FALSE, 16, ptr::null());
     gl::EnableVertexAttribArray(1);
+    // Set up normal buffer
+    let mut normal_bufferIds: u32 = 0;
+    gl::GenBuffers(2, &mut normal_bufferIds as *mut u32);
+    gl::BindBuffer(gl::ARRAY_BUFFER, normal_bufferIds);
+
+    gl::BufferData(
+        gl::ARRAY_BUFFER,
+        byte_size_of_array(normals),
+        pointer_to_array(normals),
+        gl::STATIC_DRAW,
+    );
+
+    gl::VertexAttribPointer(2, 3, gl::FLOAT, gl::FALSE, 12, ptr::null());
+    gl::EnableVertexAttribArray(2);
     let mut index_bufferIds: u32 = 0;
     gl::GenBuffers(1, &mut index_bufferIds as *mut u32);
     gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, index_bufferIds);
@@ -249,12 +269,18 @@ fn main() {
         // == // Set up your VAO here
         let vao_id: u32;
 
-        let (coordinates, indices, colors) = task1_triangles();
+        let terrain = mesh::Terrain::load("./resources/lunarsurface.obj");
+        //let (coordinates, indices, colors) = task1_triangles();
         //let (coordinates, indices) = circle_coordinates(0.0, 0.0, 0.0, 0.5, 400);
         // let (coordinates, indices) = sine_function(-0.8, 0.8, 500);
-        let count = indices.len() as i32;
+        // let count = indices.len() as i32;
         unsafe {
-            vao_id = set_up_vao(&coordinates, &indices, &colors); // set up the vertex array object
+            vao_id = set_up_vao(
+                &terrain.vertices,
+                &terrain.indices,
+                &terrain.colors,
+                &terrain.normals,
+            ); // set up the vertex array object
             gl::BindVertexArray(vao_id);
         }
 
@@ -281,22 +307,22 @@ fn main() {
                 for key in keys.iter() {
                     match key {
                         VirtualKeyCode::A => {
-                            x += delta_time;
+                            x += 80.0 * delta_time;
                         }
                         VirtualKeyCode::D => {
-                            x -= delta_time;
+                            x -= 80.0 * delta_time;
                         }
                         VirtualKeyCode::W => {
-                            z += delta_time;
+                            z += 80.0 * delta_time;
                         }
                         VirtualKeyCode::S => {
-                            z -= delta_time;
+                            z -= 80.0 * delta_time;
                         }
                         VirtualKeyCode::Q => {
-                            y += delta_time;
+                            y += 80.0 * delta_time;
                         }
                         VirtualKeyCode::E => {
-                            y -= delta_time;
+                            y -= 80.0 * delta_time;
                         }
                         VirtualKeyCode::Up => {
                             if yaw > -1.5 {
@@ -332,7 +358,7 @@ fn main() {
                 //let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0, 1.0, -20.0));
                 let translation: glm::Mat4 = glm::translation(&glm::vec3(x, y, z - 5.0));
                 let perspective: glm::Mat4 =
-                    glm::perspective(SCREEN_W as f32 / SCREEN_H as f32, 1.0, 1.0, 100.0);
+                    glm::perspective(SCREEN_W as f32 / SCREEN_H as f32, 1.0, 1.0, 1000.0);
                 let yaw_rotation: glm::Mat4 = glm::rotation(yaw, &glm::vec3(1.0, 0.0, 0.0));
                 let pitch_rotation: glm::Mat4 = glm::rotation(pitch, &glm::vec3(0.0, 1.0, 0.0));
 
@@ -340,7 +366,12 @@ fn main() {
                 let location = shader_pair.get_uniform_location("matrix");
                 gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
                 // Draw elements
-                gl::DrawElements(gl::TRIANGLES, count, gl::UNSIGNED_INT, ptr::null());
+                gl::DrawElements(
+                    gl::TRIANGLES,
+                    terrain.index_count,
+                    gl::UNSIGNED_INT,
+                    ptr::null(),
+                );
             }
 
             context.swap_buffers().unwrap();
