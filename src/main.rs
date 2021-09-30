@@ -18,8 +18,8 @@ use glutin::event::{
 use glutin::event_loop::ControlFlow;
 use scene_graph::SceneNode;
 
-const SCREEN_W: u32 = 800;
-const SCREEN_H: u32 = 600;
+const SCREEN_W: u32 = 1600;
+const SCREEN_H: u32 = 900;
 
 // == // Helper functions to make interacting with OpenGL a little bit prettier. You *WILL* need these! // == //
 // The names should be pretty self explanatory
@@ -333,8 +333,10 @@ fn main() {
         let mut x: f32 = 0.0;
         let mut y: f32 = 0.0;
         let mut z: f32 = 0.0;
-        let mut yaw: f32 = 0.0;
         let mut pitch: f32 = 0.0;
+        let mut yaw: f32 = 0.0;
+
+        let mut speed = 70.0;
         // The main rendering loop
         loop {
             let now = std::time::Instant::now();
@@ -347,38 +349,50 @@ fn main() {
                 for key in keys.iter() {
                     match key {
                         VirtualKeyCode::A => {
-                            x += 80.0 * delta_time;
+                            z += speed * delta_time * yaw.sin();
+                            x += speed * delta_time * yaw.cos();
                         }
                         VirtualKeyCode::D => {
-                            x -= 80.0 * delta_time;
+                            z -= speed * delta_time * yaw.sin();
+                            x -= speed * delta_time * yaw.cos();
                         }
                         VirtualKeyCode::W => {
-                            z += 80.0 * delta_time;
+                            z += speed * delta_time * yaw.cos() * pitch.cos();
+                            x += speed * delta_time * -yaw.sin() * pitch.cos();
+                            y += speed * delta_time * pitch.sin();
                         }
                         VirtualKeyCode::S => {
-                            z -= 80.0 * delta_time;
+                            z -= speed * delta_time * yaw.cos();
+                            x -= speed * delta_time * -yaw.sin();
+                            y -= speed * delta_time * pitch.sin();
                         }
                         VirtualKeyCode::Q => {
-                            y += 80.0 * delta_time;
+                            y += speed * delta_time;
                         }
                         VirtualKeyCode::E => {
-                            y -= 80.0 * delta_time;
+                            y -= speed * delta_time;
                         }
                         VirtualKeyCode::Up => {
-                            if yaw > -1.5 {
-                                yaw -= delta_time;
+                            if pitch > -1.5 {
+                                pitch -= 1.5 * delta_time;
                             }
                         }
                         VirtualKeyCode::Down => {
-                            if yaw < 1.5 {
-                                yaw += delta_time;
+                            if pitch < 1.5 {
+                                pitch += 1.5 * delta_time;
                             }
                         }
                         VirtualKeyCode::Left => {
-                            pitch -= delta_time;
+                            yaw -= 1.5 * delta_time;
                         }
                         VirtualKeyCode::Right => {
-                            pitch += delta_time;
+                            yaw += 1.5 * delta_time;
+                        }
+                        VirtualKeyCode::Space => {
+                            speed += 20.0;
+                        }
+                        VirtualKeyCode::LControl => {
+                            speed -= if speed > 20.0 { 20.0 } else { 0.0 };
                         }
 
                         _ => {}
@@ -399,10 +413,18 @@ fn main() {
                 let translation: glm::Mat4 = glm::translation(&glm::vec3(x, y, z - 5.0));
                 let perspective: glm::Mat4 =
                     glm::perspective(SCREEN_W as f32 / SCREEN_H as f32, 1.0, 1.0, 1000.0);
-                let yaw_rotation: glm::Mat4 = glm::rotation(yaw, &glm::vec3(1.0, 0.0, 0.0));
-                let pitch_rotation: glm::Mat4 = glm::rotation(pitch, &glm::vec3(0.0, 1.0, 0.0));
 
-                let matrix: glm::Mat4 = perspective * pitch_rotation * yaw_rotation * translation;
+                let mut rotation: glm::Mat4 = glm::identity();
+
+                rotation =
+                    glm::rotation(pitch, &(&rotation * &glm::vec4(1.0, 0.0, 0.0, 1.0)).xyz())
+                        * rotation;
+                rotation = glm::rotation(yaw, &(&rotation * &glm::vec4(0.0, 1.0, 0.0, 1.0)).xyz())
+                    * rotation;
+                // let pitch_rotation: glm::Mat4 = glm::rotation(pitch, &glm::vec3(1.0, 0.0, 0.0));
+                // let yaw_rotation: glm::Mat4 = glm::rotation(yaw, &glm::vec3(0.0, 1.0, 0.0));
+
+                let matrix: glm::Mat4 = perspective * rotation * translation;
                 let location = shader_pair.get_uniform_location("matrix");
                 gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
                 // Draw elements
