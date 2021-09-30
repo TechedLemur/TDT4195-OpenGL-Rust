@@ -4,6 +4,7 @@ use std::thread;
 use std::{mem, os::raw::c_void, ptr};
 
 mod mesh;
+mod scene_graph;
 mod shader;
 mod util;
 
@@ -15,6 +16,7 @@ use glutin::event::{
     WindowEvent,
 };
 use glutin::event_loop::ControlFlow;
+use scene_graph::SceneNode;
 
 const SCREEN_W: u32 = 800;
 const SCREEN_H: u32 = 600;
@@ -267,22 +269,60 @@ fn main() {
             shader_pair.activate(); // activate shaders
         }
         // == // Set up your VAO here
-        let vao_id: u32;
+        let surface_vao_id: u32;
+        let body_vao_id: u32;
+        let door_vao_id: u32;
+        let main_rotor_vao_id: u32;
+        let tail_rotor_vao_id: u32;
+
+        let mut surface_node;
+        let mut body_node;
+        let mut door_node;
+        let mut main_rotor_node;
+        let mut tail_rotor_node;
 
         let terrain = mesh::Terrain::load("./resources/lunarsurface.obj");
-        //let (coordinates, indices, colors) = task1_triangles();
-        //let (coordinates, indices) = circle_coordinates(0.0, 0.0, 0.0, 0.5, 400);
-        // let (coordinates, indices) = sine_function(-0.8, 0.8, 500);
-        // let count = indices.len() as i32;
+        let helicopter = mesh::Helicopter::load("./resources/helicopter.obj");
+
         unsafe {
-            vao_id = set_up_vao(
+            // set up the vertex array objects
+            surface_vao_id = set_up_vao(
                 &terrain.vertices,
                 &terrain.indices,
                 &terrain.colors,
                 &terrain.normals,
-            ); // set up the vertex array object
-            gl::BindVertexArray(vao_id);
+            );
+            body_vao_id = set_up_vao(
+                &helicopter.body.vertices,
+                &helicopter.body.indices,
+                &helicopter.body.colors,
+                &helicopter.body.normals,
+            );
+            door_vao_id = set_up_vao(
+                &helicopter.door.vertices,
+                &helicopter.door.indices,
+                &helicopter.door.colors,
+                &helicopter.door.normals,
+            );
+            main_rotor_vao_id = set_up_vao(
+                &helicopter.main_rotor.vertices,
+                &helicopter.main_rotor.indices,
+                &helicopter.main_rotor.colors,
+                &helicopter.main_rotor.normals,
+            );
+            tail_rotor_vao_id = set_up_vao(
+                &helicopter.tail_rotor.vertices,
+                &helicopter.tail_rotor.indices,
+                &helicopter.tail_rotor.colors,
+                &helicopter.tail_rotor.normals,
+            );
         }
+
+        surface_node = SceneNode::from_vao(surface_vao_id, terrain.index_count);
+        body_node = SceneNode::from_vao(body_vao_id, helicopter.body.index_count);
+        door_node = SceneNode::from_vao(door_vao_id, helicopter.door.index_count);
+        main_rotor_node = SceneNode::from_vao(main_rotor_vao_id, helicopter.main_rotor.index_count);
+        tail_rotor_node = SceneNode::from_vao(tail_rotor_vao_id, helicopter.tail_rotor.index_count);
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
@@ -366,9 +406,44 @@ fn main() {
                 let location = shader_pair.get_uniform_location("matrix");
                 gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
                 // Draw elements
+                gl::BindVertexArray(surface_vao_id);
+
                 gl::DrawElements(
                     gl::TRIANGLES,
                     terrain.index_count,
+                    gl::UNSIGNED_INT,
+                    ptr::null(),
+                );
+                gl::BindVertexArray(body_vao_id);
+
+                gl::DrawElements(
+                    gl::TRIANGLES,
+                    helicopter.body.index_count,
+                    gl::UNSIGNED_INT,
+                    ptr::null(),
+                );
+                gl::BindVertexArray(door_vao_id);
+
+                gl::DrawElements(
+                    gl::TRIANGLES,
+                    helicopter.door.index_count,
+                    gl::UNSIGNED_INT,
+                    ptr::null(),
+                );
+                gl::BindVertexArray(main_rotor_vao_id);
+
+                gl::DrawElements(
+                    gl::TRIANGLES,
+                    helicopter.main_rotor.index_count,
+                    gl::UNSIGNED_INT,
+                    ptr::null(),
+                );
+
+                gl::BindVertexArray(tail_rotor_vao_id);
+
+                gl::DrawElements(
+                    gl::TRIANGLES,
+                    helicopter.tail_rotor.index_count,
                     gl::UNSIGNED_INT,
                     ptr::null(),
                 );
