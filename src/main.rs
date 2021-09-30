@@ -248,10 +248,13 @@ unsafe fn update_node_transformations(
     // trans = glm::inverse(transformation_so_far) * trans;
     trans = glm::translation(&-node.reference_point) * trans; // move to origin
     trans = glm::scaling(&node.scale) * trans; // scale
-    trans = glm::rotation(node.rotation.z, &glm::vec3(0.0, 0.0, 1.0)) * trans; // rotate around z
-    trans = glm::rotation(node.rotation.y, &glm::vec3(0.0, 1.0, 0.0)) * trans; // rotate around y
-    trans = glm::rotation(node.rotation.x, &glm::vec3(1.0, 0.0, 0.0)) * trans; // rotate around x
 
+    let mut rotation: glm::Mat4 = glm::identity();
+    rotation = glm::rotation(node.rotation.z, &(&rotation * &glm::vec4(0.0, 0.0, 1.0, 1.0)).xyz()) * rotation; // rotate around z
+    rotation = glm::rotation(node.rotation.y, &(&rotation * &glm::vec4(0.0, 1.0, 0.0, 1.0)).xyz()) * rotation; // rotate around y
+    rotation = glm::rotation(node.rotation.x, &(&rotation * &glm::vec4(1.0, 0.0, 0.0, 1.0)).xyz()) * rotation; // rotate around x
+
+    trans = rotation * trans; // apply rotation
     trans = glm::translation(&node.reference_point) * trans; // move to back to reference point
     trans = glm::translation(&node.position) * trans; // move to relative location
 
@@ -405,6 +408,8 @@ fn main() {
             body_node.add_child(&main_rotor_node);
             body_node.add_child(&tail_rotor_node);
             body_node.add_child(&door_node);
+            
+            body_node.position.y = 10.0; // make helicopters fly a bit higher
 
             choppers.push(body_node);
         }
@@ -506,17 +511,10 @@ fn main() {
                         * rotation;
                 rotation = glm::rotation(yaw, &(&rotation * &glm::vec4(0.0, 1.0, 0.0, 1.0)).xyz())
                     * rotation;
-                // let pitch_rotation: glm::Mat4 = glm::rotation(pitch, &glm::vec3(1.0, 0.0, 0.0));
-                // let yaw_rotation: glm::Mat4 = glm::rotation(yaw, &glm::vec3(0.0, 1.0, 0.0));
+                
 
                 let matrix: glm::Mat4 = perspective * rotation * translation;
-                //let location = shader_pair.get_uniform_location("matrix");
-                //gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
-                // body_node.position.x = path.x;
-                // body_node.position.z = path.z;
-                // body_node.rotation.x = path.pitch;
-                // body_node.rotation.y = path.yaw;
-                // body_node.rotation.z = path.roll;
+             
 
                 for i in 0..5 {
                     let path = toolbox::simple_heading_animation(elapsed - 600.0 * i as f32);
