@@ -250,9 +250,18 @@ unsafe fn update_node_transformations(
     trans = glm::scaling(&node.scale) * trans; // scale
 
     let mut rotation: glm::Mat4 = glm::identity();
-    rotation = glm::rotation(node.rotation.z, &(&rotation * &glm::vec4(0.0, 0.0, 1.0, 1.0)).xyz()) * rotation; // rotate around z
-    rotation = glm::rotation(node.rotation.y, &(&rotation * &glm::vec4(0.0, 1.0, 0.0, 1.0)).xyz()) * rotation; // rotate around y
-    rotation = glm::rotation(node.rotation.x, &(&rotation * &glm::vec4(1.0, 0.0, 0.0, 1.0)).xyz()) * rotation; // rotate around x
+    rotation = glm::rotation(
+        node.rotation.z,
+        &(&rotation * &glm::vec4(0.0, 0.0, 1.0, 1.0)).xyz(),
+    ) * rotation; // rotate around z
+    rotation = glm::rotation(
+        node.rotation.y,
+        &(&rotation * &glm::vec4(0.0, 1.0, 0.0, 1.0)).xyz(),
+    ) * rotation; // rotate around y
+    rotation = glm::rotation(
+        node.rotation.x,
+        &(&rotation * &glm::vec4(1.0, 0.0, 0.0, 1.0)).xyz(),
+    ) * rotation; // rotate around x
 
     trans = rotation * trans; // apply rotation
     trans = glm::translation(&node.reference_point) * trans; // move to back to reference point
@@ -408,7 +417,6 @@ fn main() {
             body_node.add_child(&main_rotor_node);
             body_node.add_child(&tail_rotor_node);
             body_node.add_child(&door_node);
-            
             body_node.position.y = 10.0; // make helicopters fly a bit higher
 
             choppers.push(body_node);
@@ -511,10 +519,8 @@ fn main() {
                         * rotation;
                 rotation = glm::rotation(yaw, &(&rotation * &glm::vec4(0.0, 1.0, 0.0, 1.0)).xyz())
                     * rotation;
-                
 
                 let matrix: glm::Mat4 = perspective * rotation * translation;
-             
 
                 for i in 0..5 {
                     let path = toolbox::simple_heading_animation(elapsed - 600.0 * i as f32);
