@@ -494,6 +494,8 @@ fn main() {
                 //let location = shader_pair.get_uniform_location("matrix");
                 //gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
                 // Draw elements
+                main_rotor_node.rotation.y = 5.0 * elapsed;
+                tail_rotor_node.rotation.x = 10.0 * elapsed;
                 update_node_transformations(&mut root_node, &glm::identity());
                 draw_scene(&root_node, &matrix, &shader_pair);
             }
