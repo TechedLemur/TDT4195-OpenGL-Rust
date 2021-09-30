@@ -202,6 +202,59 @@ unsafe fn set_up_vao(
     return arrayID;
 }
 
+unsafe fn draw_scene(
+    node: &scene_graph::SceneNode,
+    view_projection_matrix: &glm::Mat4,
+    shader: &shader::Shader,
+) {
+    // Check if node is drawable, set uniforms, draw
+    if node.index_count > 0 {
+        gl::BindVertexArray(node.vao_id);
+        let location = shader.get_uniform_location("matrix");
+        gl::UniformMatrix4fv(
+            location,
+            1,
+            gl::FALSE,
+            (view_projection_matrix * node.current_transformation_matrix).as_ptr(),
+        );
+        gl::DrawElements(
+            gl::TRIANGLES,
+            node.index_count,
+            gl::UNSIGNED_INT,
+            ptr::null(),
+        );
+    }
+
+    // Recurse
+    for &child in &node.children {
+        draw_scene(&*child, view_projection_matrix, shader);
+    }
+}
+
+unsafe fn update_node_transformations(
+    node: &mut scene_graph::SceneNode,
+    transformation_so_far: &glm::Mat4,
+) {
+    // Construct the correct transformation matrix
+    let mut trans: glm::Mat4 = glm::identity();
+
+    trans = glm::translation(&-node.reference_point) * trans; // move to origin
+    trans = glm::scaling(&node.scale) * trans; // scale
+    trans = glm::rotation(node.rotation.x, &glm::vec3(1.0, 0.0, 0.0)) * trans; // rotate around x
+    trans = glm::rotation(node.rotation.y, &glm::vec3(0.0, 1.0, 0.0)) * trans; // rotate around y
+    trans = glm::rotation(node.rotation.z, &glm::vec3(0.0, 0.0, 1.0)) * trans; // rotate around z
+
+    trans = glm::translation(&node.reference_point) * trans; // move to back to reference point
+
+    trans = glm::translation(&node.position) * trans; // move to relative location
+
+    // Update the node's transformation matrix
+    node.current_transformation_matrix = trans * transformation_so_far;
+    // Recurse
+    for &child in &node.children {
+        update_node_transformations(&mut *child, &node.current_transformation_matrix);
+    }
+}
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
     let el = glutin::event_loop::EventLoop::new();
@@ -317,12 +370,24 @@ fn main() {
                 &helicopter.tail_rotor.normals,
             );
         }
-
+        let mut root_node = SceneNode::new();
         surface_node = SceneNode::from_vao(surface_vao_id, terrain.index_count);
         body_node = SceneNode::from_vao(body_vao_id, helicopter.body.index_count);
         door_node = SceneNode::from_vao(door_vao_id, helicopter.door.index_count);
         main_rotor_node = SceneNode::from_vao(main_rotor_vao_id, helicopter.main_rotor.index_count);
         tail_rotor_node = SceneNode::from_vao(tail_rotor_vao_id, helicopter.tail_rotor.index_count);
+
+        root_node.reference_point = glm::vec3(0.0, 0.0, 0.0);
+        surface_node.reference_point = glm::vec3(0.0, 0.0, 0.0);
+        body_node.reference_point = glm::vec3(0.0, 2.0, 0.0);
+        door_node.reference_point = glm::vec3(0.0, 2.0, 0.0);
+        main_rotor_node.reference_point = glm::vec3(0.0, 2.2, 0.0);
+        tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
+        root_node.add_child(&surface_node);
+        root_node.add_child(&body_node);
+        body_node.add_child(&door_node);
+        body_node.add_child(&main_rotor_node);
+        body_node.add_child(&tail_rotor_node);
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
@@ -337,6 +402,7 @@ fn main() {
         let mut yaw: f32 = 0.0;
 
         let mut speed = 70.0;
+
         // The main rendering loop
         loop {
             let now = std::time::Instant::now();
@@ -425,50 +491,11 @@ fn main() {
                 // let yaw_rotation: glm::Mat4 = glm::rotation(yaw, &glm::vec3(0.0, 1.0, 0.0));
 
                 let matrix: glm::Mat4 = perspective * rotation * translation;
-                let location = shader_pair.get_uniform_location("matrix");
-                gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
+                //let location = shader_pair.get_uniform_location("matrix");
+                //gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
                 // Draw elements
-                gl::BindVertexArray(surface_vao_id);
-
-                gl::DrawElements(
-                    gl::TRIANGLES,
-                    terrain.index_count,
-                    gl::UNSIGNED_INT,
-                    ptr::null(),
-                );
-                gl::BindVertexArray(body_vao_id);
-
-                gl::DrawElements(
-                    gl::TRIANGLES,
-                    helicopter.body.index_count,
-                    gl::UNSIGNED_INT,
-                    ptr::null(),
-                );
-                gl::BindVertexArray(door_vao_id);
-
-                gl::DrawElements(
-                    gl::TRIANGLES,
-                    helicopter.door.index_count,
-                    gl::UNSIGNED_INT,
-                    ptr::null(),
-                );
-                gl::BindVertexArray(main_rotor_vao_id);
-
-                gl::DrawElements(
-                    gl::TRIANGLES,
-                    helicopter.main_rotor.index_count,
-                    gl::UNSIGNED_INT,
-                    ptr::null(),
-                );
-
-                gl::BindVertexArray(tail_rotor_vao_id);
-
-                gl::DrawElements(
-                    gl::TRIANGLES,
-                    helicopter.tail_rotor.index_count,
-                    gl::UNSIGNED_INT,
-                    ptr::null(),
-                );
+                update_node_transformations(&mut root_node, &glm::identity());
+                draw_scene(&root_node, &matrix, &shader_pair);
             }
 
             context.swap_buffers().unwrap();
