@@ -6,8 +6,8 @@ use std::{mem, os::raw::c_void, ptr};
 mod mesh;
 mod scene_graph;
 mod shader;
+mod toolbox;
 mod util;
-
 use glutin::event::{
     DeviceEvent,
     ElementState::{Pressed, Released},
@@ -238,18 +238,18 @@ unsafe fn update_node_transformations(
     // Construct the correct transformation matrix
     let mut trans: glm::Mat4 = glm::identity();
 
+    // trans = glm::inverse(transformation_so_far) * trans;
     trans = glm::translation(&-node.reference_point) * trans; // move to origin
     trans = glm::scaling(&node.scale) * trans; // scale
-    trans = glm::rotation(node.rotation.x, &glm::vec3(1.0, 0.0, 0.0)) * trans; // rotate around x
-    trans = glm::rotation(node.rotation.y, &glm::vec3(0.0, 1.0, 0.0)) * trans; // rotate around y
     trans = glm::rotation(node.rotation.z, &glm::vec3(0.0, 0.0, 1.0)) * trans; // rotate around z
+    trans = glm::rotation(node.rotation.y, &glm::vec3(0.0, 1.0, 0.0)) * trans; // rotate around y
+    trans = glm::rotation(node.rotation.x, &glm::vec3(1.0, 0.0, 0.0)) * trans; // rotate around x
 
     trans = glm::translation(&node.reference_point) * trans; // move to back to reference point
-
     trans = glm::translation(&node.position) * trans; // move to relative location
 
     // Update the node's transformation matrix
-    node.current_transformation_matrix = trans * transformation_so_far;
+    node.current_transformation_matrix = transformation_so_far * trans;
     // Recurse
     for &child in &node.children {
         update_node_transformations(&mut *child, &node.current_transformation_matrix);
@@ -493,9 +493,16 @@ fn main() {
                 let matrix: glm::Mat4 = perspective * rotation * translation;
                 //let location = shader_pair.get_uniform_location("matrix");
                 //gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
-                // Draw elements
+                let path = toolbox::simple_heading_animation(elapsed);
+                body_node.position.x = path.x;
+                body_node.position.z = path.z;
+                body_node.rotation.x = path.pitch;
+                body_node.rotation.y = path.yaw;
+                body_node.rotation.z = path.roll;
+
                 main_rotor_node.rotation.y = 5.0 * elapsed;
                 tail_rotor_node.rotation.x = 10.0 * elapsed;
+                // Draw elements
                 update_node_transformations(&mut root_node, &glm::identity());
                 draw_scene(&root_node, &matrix, &shader_pair);
             }
