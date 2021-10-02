@@ -316,7 +316,7 @@ fn build_helicopter(helicopter: &mesh::Helicopter) -> scene_graph::Node {
     tail_rotor_node = SceneNode::from_vao(tail_rotor_vao_id, helicopter.tail_rotor.index_count);
 
     body_node.reference_point = glm::vec3(0.0, 0.0, 0.0);
-    door_node.reference_point = glm::vec3(0.0, 0.0, 0.0);
+    door_node.reference_point = glm::vec3(1.13, 0.82, 0.0);
     main_rotor_node.reference_point = glm::vec3(0.0, 2.2, 0.0);
     tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
     body_node.add_child(&main_rotor_node);
@@ -504,6 +504,17 @@ fn main() {
                                 controllable_helicopter[2].position.z -= delta_time;
                             }
                         }
+
+                        VirtualKeyCode::R => {
+                            if controllable_helicopter[2].rotation.z + delta_time <= 2.0 {
+                                controllable_helicopter[2].rotation.z += delta_time;
+                            }
+                        }
+                        VirtualKeyCode::T => {
+                            if controllable_helicopter[2].rotation.z - delta_time >= 0.0 {
+                                controllable_helicopter[2].rotation.z -= delta_time;
+                            }
+                        }
                         VirtualKeyCode::Space => {
                             speed += 20.0;
                         }
@@ -521,11 +532,9 @@ fn main() {
             }
 
             unsafe {
-                // gl::ClearColor(0.76862745, 0.71372549, 0.94901961, 1.0); // moon raker, full opacity
                 gl::ClearColor(0.6, 0.71372549, 0.94901961, 0.7);
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-                //let scaling: glm::Mat4 = glm::scaling(&glm::vec3(1.0, 1.0, -20.0));
                 let translation: glm::Mat4 = glm::translation(&glm::vec3(x, y, z - 5.0));
                 let perspective: glm::Mat4 =
                     glm::perspective(SCREEN_W as f32 / SCREEN_H as f32, 1.0, 1.0, 1000.0);
@@ -551,9 +560,7 @@ fn main() {
                     choppers[i][1].rotation.x = 10.0 * elapsed; // rotate tail rotor
                 }
 
-                // controllable_helicopter.position.x = -x;
                 controllable_helicopter.position.y = 20.0;
-                // controllable_helicopter.position.z = -z - 20.0;
 
                 // Draw elements
                 update_node_transformations(&mut root_node, &glm::identity());
