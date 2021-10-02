@@ -274,6 +274,58 @@ unsafe fn update_node_transformations(
         update_node_transformations(&mut *child, &node.current_transformation_matrix);
     }
 }
+
+fn build_helicopter(helicopter: &mesh::Helicopter) -> scene_graph::Node {
+    let body_vao_id: u32;
+    let door_vao_id: u32;
+    let main_rotor_vao_id: u32;
+    let tail_rotor_vao_id: u32;
+    let mut body_node;
+    let mut door_node;
+    let mut main_rotor_node;
+    let mut tail_rotor_node;
+    unsafe {
+        body_vao_id = set_up_vao(
+            &helicopter.body.vertices,
+            &helicopter.body.indices,
+            &helicopter.body.colors,
+            &helicopter.body.normals,
+        );
+        door_vao_id = set_up_vao(
+            &helicopter.door.vertices,
+            &helicopter.door.indices,
+            &helicopter.door.colors,
+            &helicopter.door.normals,
+        );
+        main_rotor_vao_id = set_up_vao(
+            &helicopter.main_rotor.vertices,
+            &helicopter.main_rotor.indices,
+            &helicopter.main_rotor.colors,
+            &helicopter.main_rotor.normals,
+        );
+        tail_rotor_vao_id = set_up_vao(
+            &helicopter.tail_rotor.vertices,
+            &helicopter.tail_rotor.indices,
+            &helicopter.tail_rotor.colors,
+            &helicopter.tail_rotor.normals,
+        );
+    }
+    body_node = SceneNode::from_vao(body_vao_id, helicopter.body.index_count);
+    door_node = SceneNode::from_vao(door_vao_id, helicopter.door.index_count);
+    main_rotor_node = SceneNode::from_vao(main_rotor_vao_id, helicopter.main_rotor.index_count);
+    tail_rotor_node = SceneNode::from_vao(tail_rotor_vao_id, helicopter.tail_rotor.index_count);
+
+    body_node.reference_point = glm::vec3(0.0, 0.0, 0.0);
+    door_node.reference_point = glm::vec3(0.0, 0.0, 0.0);
+    main_rotor_node.reference_point = glm::vec3(0.0, 2.2, 0.0);
+    tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
+    body_node.add_child(&main_rotor_node);
+    body_node.add_child(&tail_rotor_node);
+    body_node.add_child(&door_node);
+    body_node.position.y = 10.0; // make helicopters fly a bit higher
+
+    return body_node;
+}
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
     let el = glutin::event_loop::EventLoop::new();
@@ -344,13 +396,8 @@ fn main() {
         let surface_vao_id: u32;
 
         let mut surface_node;
-        let mut body_node;
-        let mut door_node;
-        let mut main_rotor_node;
-        let mut tail_rotor_node;
-
         let terrain = mesh::Terrain::load("./resources/lunarsurface.obj");
-        let helicopter = mesh::Helicopter::load("./resources/helicopter.obj");
+        let helicopter_mesh = mesh::Helicopter::load("./resources/helicopter.obj");
 
         let mut root_node = SceneNode::new();
         root_node.reference_point = glm::vec3(0.0, 0.0, 0.0);
@@ -368,61 +415,17 @@ fn main() {
         surface_node = SceneNode::from_vao(surface_vao_id, terrain.index_count);
         surface_node.reference_point = glm::vec3(0.0, 0.0, 0.0);
 
+        root_node.add_child(&surface_node);
         let mut choppers: Vec<scene_graph::Node> = Vec::new();
+        for _i in 0..5 {
+            let chopper = build_helicopter(&helicopter_mesh);
+            root_node.add_child(&chopper);
 
-        for i in 0..5 {
-            let body_vao_id: u32;
-            let door_vao_id: u32;
-            let main_rotor_vao_id: u32;
-            let tail_rotor_vao_id: u32;
-            unsafe {
-                body_vao_id = set_up_vao(
-                    &helicopter.body.vertices,
-                    &helicopter.body.indices,
-                    &helicopter.body.colors,
-                    &helicopter.body.normals,
-                );
-                door_vao_id = set_up_vao(
-                    &helicopter.door.vertices,
-                    &helicopter.door.indices,
-                    &helicopter.door.colors,
-                    &helicopter.door.normals,
-                );
-                main_rotor_vao_id = set_up_vao(
-                    &helicopter.main_rotor.vertices,
-                    &helicopter.main_rotor.indices,
-                    &helicopter.main_rotor.colors,
-                    &helicopter.main_rotor.normals,
-                );
-                tail_rotor_vao_id = set_up_vao(
-                    &helicopter.tail_rotor.vertices,
-                    &helicopter.tail_rotor.indices,
-                    &helicopter.tail_rotor.colors,
-                    &helicopter.tail_rotor.normals,
-                );
-            }
-            body_node = SceneNode::from_vao(body_vao_id, helicopter.body.index_count);
-            door_node = SceneNode::from_vao(door_vao_id, helicopter.door.index_count);
-            main_rotor_node =
-                SceneNode::from_vao(main_rotor_vao_id, helicopter.main_rotor.index_count);
-            tail_rotor_node =
-                SceneNode::from_vao(tail_rotor_vao_id, helicopter.tail_rotor.index_count);
-
-            body_node.reference_point = glm::vec3(0.0, 2.0, 0.0);
-            door_node.reference_point = glm::vec3(0.0, 2.0, 0.0);
-            main_rotor_node.reference_point = glm::vec3(0.0, 2.2, 0.0);
-            tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
-            root_node.add_child(&surface_node);
-            root_node.add_child(&body_node);
-            body_node.add_child(&main_rotor_node);
-            body_node.add_child(&tail_rotor_node);
-            body_node.add_child(&door_node);
-            body_node.position.y = 10.0; // make helicopters fly a bit higher
-
-            choppers.push(body_node);
+            choppers.push(chopper);
         }
-        // Used to demonstrate keyboard handling -- feel free to remove
-        let mut _arbitrary_number = 0.0;
+
+        let mut controllable_helicopter = build_helicopter(&helicopter_mesh);
+        root_node.add_child(&controllable_helicopter);
 
         let first_frame_time = std::time::Instant::now();
         let mut last_frame_time = first_frame_time;
@@ -486,6 +489,21 @@ fn main() {
                         VirtualKeyCode::Right => {
                             yaw += 1.5 * delta_time;
                         }
+                        VirtualKeyCode::I => controllable_helicopter.rotation.x -= 1.5 * delta_time,
+                        VirtualKeyCode::K => controllable_helicopter.rotation.x += 1.5 * delta_time,
+                        VirtualKeyCode::J => controllable_helicopter.rotation.y += 1.5 * delta_time,
+                        VirtualKeyCode::L => controllable_helicopter.rotation.y -= 1.5 * delta_time,
+
+                        VirtualKeyCode::O => {
+                            if controllable_helicopter[2].position.z + delta_time <= 2.0 {
+                                controllable_helicopter[2].position.z += delta_time;
+                            }
+                        }
+                        VirtualKeyCode::P => {
+                            if controllable_helicopter[2].position.z - delta_time >= 0.0 {
+                                controllable_helicopter[2].position.z -= delta_time;
+                            }
+                        }
                         VirtualKeyCode::Space => {
                             speed += 20.0;
                         }
@@ -532,6 +550,10 @@ fn main() {
                     choppers[i][0].rotation.y = 5.0 * elapsed; // rotate main rotor
                     choppers[i][1].rotation.x = 10.0 * elapsed; // rotate tail rotor
                 }
+
+                // controllable_helicopter.position.x = -x;
+                controllable_helicopter.position.y = 20.0;
+                // controllable_helicopter.position.z = -z - 20.0;
 
                 // Draw elements
                 update_node_transformations(&mut root_node, &glm::identity());

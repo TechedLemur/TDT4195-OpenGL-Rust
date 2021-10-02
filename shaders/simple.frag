@@ -10,10 +10,6 @@ vec3 lightDirection = normalize(vec3(0.8, -0.5, 0.6));
 void main()
 {
     float scalar =max(dot(-lightDirection, inNormals),0);
-    //color = inColor;
-    color = vec4(scalar*inColor[0],
-                 scalar*inColor[1],
-                 scalar*inColor[2],
-                 inColor[3]);
-    //color = inColor
+    color = vec4(scalar*inColor.xyz, inColor[3]);
+    //color = vec4(inNormals, 1.0f);
 }
